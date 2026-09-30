@@ -1,0 +1,408 @@
+{
+  "collection": {
+    "_": {
+      "postman_id": "77d4953e-eaf5-49de-86e5-7c38c1284af8"
+    },
+    "item": [
+      {
+        "id": "033cd51b-78d6-4819-837b-bda2c8309623",
+        "name": "GET coupons_poc returns success message",
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "4566",
+            "path": [
+              "_aws",
+              "execute-api",
+              "{{apiId}}",
+              "test",
+              "coupons_poc"
+            ],
+            "host": [
+              "localhost"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            }
+          ],
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "7116c77a-4011-4756-b530-8144937b0213",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status code is 200\", function () {",
+                "  pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test(\"Response is JSON\", function () {",
+                "  pm.response.to.be.json;",
+                "});",
+                "",
+                "pm.test(\"Response contains the expected message\", function () {",
+                "  const response = pm.response.json();",
+                "  pm.expect(response).to.eql({",
+                "    message: \"Coupons API is working successfully\"",
+                "  });",
+                "});"
+              ],
+              "_lastExecutionId": "96fd610b-75ae-4f7c-b8c9-1653c65f4e85"
+            }
+          }
+        ]
+      }
+    ],
+    "event": [],
+    "variable": [
+      {
+        "type": "string",
+        "value": "",
+        "key": "apiId"
+      }
+    ],
+    "info": {
+      "_postman_id": "77d4953e-eaf5-49de-86e5-7c38c1284af8",
+      "name": "Coupons API LocalStack Tests",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      "description": {
+        "content": "Newman tests for the GET /coupons_poc LocalStack API Gateway endpoint.",
+        "type": "text/plain"
+      }
+    }
+  },
+  "environment": {
+    "id": "3bdbf1de-8ddd-482b-9d5b-8fe411afc1a5",
+    "values": [
+      {
+        "type": "any",
+        "value": "uf9nzx3v3u",
+        "key": "apiId"
+      }
+    ]
+  },
+  "globals": {
+    "id": "431499ba-67d1-4474-86a7-4c2e8d9073f5",
+    "values": []
+  },
+  "run": {
+    "stats": {
+      "iterations": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "items": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "scripts": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequests": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "requests": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "tests": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "assertions": {
+        "total": 3,
+        "pending": 0,
+        "failed": 0
+      },
+      "testScripts": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequestScripts": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    "timings": {
+      "responseAverage": 51,
+      "responseMin": 51,
+      "responseMax": 51,
+      "responseSd": 0,
+      "dnsAverage": 0,
+      "dnsMin": 0,
+      "dnsMax": 0,
+      "dnsSd": 0,
+      "firstByteAverage": 0,
+      "firstByteMin": 0,
+      "firstByteMax": 0,
+      "firstByteSd": 0,
+      "started": 1790738866855,
+      "completed": 1790738866977
+    },
+    "executions": [
+      {
+        "cursor": {
+          "position": 0,
+          "iteration": 0,
+          "length": 1,
+          "cycles": 1,
+          "empty": false,
+          "eof": false,
+          "bof": true,
+          "cr": false,
+          "ref": "465adfc0-ded8-4634-a7a9-f41d1f3fb4ea",
+          "httpRequestId": "99d61488-e8f8-49d2-85a0-9b0932c34fd0"
+        },
+        "item": {
+          "id": "033cd51b-78d6-4819-837b-bda2c8309623",
+          "name": "GET coupons_poc returns success message",
+          "request": {
+            "url": {
+              "protocol": "http",
+              "port": "4566",
+              "path": [
+                "_aws",
+                "execute-api",
+                "{{apiId}}",
+                "test",
+                "coupons_poc"
+              ],
+              "host": [
+                "localhost"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7116c77a-4011-4756-b530-8144937b0213",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains the expected message\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response).to.eql({",
+                  "    message: \"Coupons API is working successfully\"",
+                  "  });",
+                  "});"
+                ],
+                "_lastExecutionId": "96fd610b-75ae-4f7c-b8c9-1653c65f4e85"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "4566",
+            "path": [
+              "_aws",
+              "execute-api",
+              "uf9nzx3v3u",
+              "test",
+              "coupons_poc"
+            ],
+            "host": [
+              "localhost"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "a699f2f5-030a-413c-8b8d-49f7bea6a833",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "localhost:4566",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "a9218142-47ad-4375-ad91-e494b63818d0",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Server",
+              "value": "TwistedWeb/25.5.0"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 30 Sep 2026 03:27:46 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Content-Length",
+              "value": "49"
+            },
+            {
+              "key": "x-amzn-RequestId",
+              "value": "f6f67af9-e579-4a44-bcd9-665d142799b3"
+            },
+            {
+              "key": "x-amz-apigw-id",
+              "value": "16ba8048="
+            },
+            {
+              "key": "X-Amzn-Trace-Id",
+              "value": "Root=1-6abc81b2-f734e946858071ac1d714dc2;Parent=8cb653b504cddfa9;Sampled=0"
+            },
+            {
+              "key": "x-localstack",
+              "value": "true"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              109,
+              101,
+              115,
+              115,
+              97,
+              103,
+              101,
+              34,
+              58,
+              34,
+              67,
+              111,
+              117,
+              112,
+              111,
+              110,
+              115,
+              32,
+              65,
+              80,
+              73,
+              32,
+              105,
+              115,
+              32,
+              119,
+              111,
+              114,
+              107,
+              105,
+              110,
+              103,
+              32,
+              115,
+              117,
+              99,
+              99,
+              101,
+              115,
+              115,
+              102,
+              117,
+              108,
+              108,
+              121,
+              34,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 51,
+          "responseSize": 49
+        },
+        "id": "033cd51b-78d6-4819-837b-bda2c8309623",
+        "assertions": [
+          {
+            "assertion": "Status code is 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Response is JSON",
+            "skipped": false
+          },
+          {
+            "assertion": "Response contains the expected message",
+            "skipped": false
+          }
+        ]
+      }
+    ],
+    "transfers": {
+      "responseTotal": 49
+    },
+    "failures": [],
+    "error": null
+  }
+}

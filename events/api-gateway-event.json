@@ -1,0 +1,17 @@
+{
+  "resource": "/coupons_poc",
+  "path": "/coupons_poc",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "requestContext": {
+    "resourcePath": "/coupons_poc",
+    "httpMethod": "GET",
+    "stage": "test"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

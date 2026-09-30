@@ -1,0 +1,85 @@
+# Coupons API assessment commands (PowerShell)
+# Run project commands from: C:\Users\doris\budimir_doris_assessment_part_1
+
+# One-time Windows prerequisites
+wsl --install
+winget install --exact --id Docker.DockerDesktop
+winget install --exact --id Amazon.AWSCLI
+
+# Verify prerequisites
+wsl --status
+docker version
+aws --version
+node --version
+
+# Configure fake credentials used only by LocalStack
+aws configure set aws_access_key_id test --profile localstack
+aws configure set aws_secret_access_key test --profile localstack
+aws configure set region us-east-1 --profile localstack
+aws configure set output json --profile localstack
+aws configure list --profile localstack
+
+# Install project test tools
+npm install
+
+# Start and verify LocalStack
+docker compose up -d
+docker compose ps
+$LOCALSTACK_ENDPOINT = "http://localhost:4566"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack sts get-caller-identity
+
+# Create the Lambda IAM role and its restricted CloudWatch Logs policy
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam create-role --role-name coupons_lambda_role --assume-role-policy-document file://iam/trust-policy.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam put-role-policy --role-name coupons_lambda_role --policy-name CouponsCloudWatchLogsPolicy --policy-document file://iam/cloudwatch-policy.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role-policy --role-name coupons_lambda_role --policy-name CouponsCloudWatchLogsPolicy
+
+# Run the unit test and save its JSON report
+npm run test:json
+
+# Package and register the Lambda function
+Compress-Archive -Path .\src\index.js -DestinationPath .\coupons_list.zip -Force
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda create-function --function-name coupons_list --runtime nodejs22.x --handler index.handler --role arn:aws:iam::000000000000:role/coupons_lambda_role --zip-file fileb://coupons_list.zip --timeout 10
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda wait function-active-v2 --function-name coupons_list
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda get-function-configuration --function-name coupons_list --query "{FunctionName:FunctionName,State:State,Runtime:Runtime,Role:Role}"
+
+# Invoke the Lambda with an API Gateway sample event and save its output
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda invoke --function-name coupons_list --payload fileb://events/api-gateway-event.json output-lambda.json
+Get-Content .\output-lambda.json
+
+# Create the REST API and /coupons_poc resource
+$api = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway create-rest-api --name coupons-api | ConvertFrom-Json
+$API_ID = $api.id
+$resources = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway get-resources --rest-api-id $API_ID | ConvertFrom-Json
+$ROOT_RESOURCE_ID = ($resources.items | Where-Object { $_.path -eq "/" }).id
+$resource = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway create-resource --rest-api-id $API_ID --parent-id $ROOT_RESOURCE_ID --path-part coupons_poc | ConvertFrom-Json
+$RESOURCE_ID = $resource.id
+
+# Add GET /coupons_poc and connect it to coupons_list
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway put-method --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method GET --authorization-type NONE
+$LAMBDA_ARN = "arn:aws:lambda:us-east-1:000000000000:function:coupons_list"
+$INTEGRATION_URI = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway put-integration --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method GET --type AWS_PROXY --integration-http-method POST --uri $INTEGRATION_URI
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda add-permission --function-name coupons_list --statement-id apigateway-coupons-get --action lambda:InvokeFunction --principal apigateway.amazonaws.com --source-arn "arn:aws:execute-api:us-east-1:000000000000:$API_ID/*/GET/coupons_poc"
+
+# Deploy and call the API
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway create-deployment --rest-api-id $API_ID --stage-name test --description "Coupons API test deployment"
+$API_URL = "http://localhost:4566/_aws/execute-api/$API_ID/test/coupons_poc"
+$response = Invoke-RestMethod -Uri $API_URL -Method GET
+$response | ConvertTo-Json
+$response | ConvertTo-Json | Set-Content -Encoding UTF8 .\api_output.json
+
+# Run Newman and save its JSON report
+npx newman run .\coupons_newman.json --env-var "apiId=$API_ID" --reporters cli,json --reporter-json-export .\newman_output.json
+
+# Useful evidence commands for the recording
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role --role-name coupons_lambda_role
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role-policy --role-name coupons_lambda_role --policy-name CouponsCloudWatchLogsPolicy
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda get-function --function-name coupons_list
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway get-resources --rest-api-id $API_ID
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack logs describe-log-groups --log-group-name-prefix /aws/lambda/coupons
+Get-Content .\api_output.json
+npm run test:json
+npx newman run .\coupons_newman.json --env-var "apiId=$API_ID"
+
+# Stop LocalStack when finished
+docker compose stop

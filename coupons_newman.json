@@ -1,0 +1,69 @@
+{
+  "info": {
+    "_postman_id": "77d4953e-eaf5-49de-86e5-7c38c1284af8",
+    "name": "Coupons API LocalStack Tests",
+    "description": "Newman tests for the GET /coupons_poc LocalStack API Gateway endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET coupons_poc returns success message",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is JSON\", function () {",
+              "  pm.response.to.be.json;",
+              "});",
+              "",
+              "pm.test(\"Response contains the expected message\", function () {",
+              "  const response = pm.response.json();",
+              "  pm.expect(response).to.eql({",
+              "    message: \"Coupons API is working successfully\"",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:4566/_aws/execute-api/{{apiId}}/test/coupons_poc",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4566",
+          "path": [
+            "_aws",
+            "execute-api",
+            "{{apiId}}",
+            "test",
+            "coupons_poc"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
