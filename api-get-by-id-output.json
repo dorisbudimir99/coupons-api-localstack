@@ -1,0 +1,9 @@
+﻿{
+    "code":  "FALL20",
+    "is_active":  true,
+    "description":  "Updated fall coupon",
+    "provider_id":  "provider-001",
+    "id":  "coupon-001",
+    "discount_percent":  25,
+    "campaign_id":  "campaign-fall"
+}

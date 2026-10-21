@@ -1,0 +1,1 @@
+{"statusCode":200,"headers":{"Content-Type":"application/json"},"body":"{\"code\":\"FALL20\",\"is_active\":true,\"provider_id\":\"provider-001\",\"description\":\"20 percent off a fall purchase\",\"id\":\"coupon-001\",\"discount_percent\":20,\"campaign_id\":\"campaign-fall\"}"}

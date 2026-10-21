@@ -1,0 +1,43 @@
+{
+  "coupons": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "coupon-001" },
+          "provider_id": { "S": "provider-001" },
+          "campaign_id": { "S": "campaign-fall" },
+          "code": { "S": "FALL20" },
+          "description": { "S": "20 percent off a fall purchase" },
+          "discount_percent": { "N": "20" },
+          "is_active": { "BOOL": true }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "coupon-002" },
+          "provider_id": { "S": "provider-001" },
+          "campaign_id": { "S": "campaign-winter" },
+          "code": { "S": "WINTER15" },
+          "description": { "S": "15 percent off a winter purchase" },
+          "discount_percent": { "N": "15" },
+          "is_active": { "BOOL": true }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "coupon-003" },
+          "provider_id": { "S": "provider-002" },
+          "campaign_id": { "S": "campaign-fall" },
+          "code": { "S": "SAVE10" },
+          "description": { "S": "10 dollars off an eligible purchase" },
+          "discount_amount": { "N": "10" },
+          "is_active": { "BOOL": true }
+        }
+      }
+    }
+  ]
+}
