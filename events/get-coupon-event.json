@@ -1,0 +1,15 @@
+{
+  "resource": "/coupons_poc/{id}",
+  "path": "/coupons_poc/coupon-001",
+  "httpMethod": "GET",
+  "pathParameters": {
+    "id": "coupon-001"
+  },
+  "requestContext": {
+    "resourcePath": "/coupons_poc/{id}",
+    "httpMethod": "GET",
+    "stage": "test"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

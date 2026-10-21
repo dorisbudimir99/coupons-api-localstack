@@ -65,16 +65,87 @@ $response = Invoke-RestMethod -Uri $API_URL -Method GET
 $response | ConvertTo-Json
 $response | ConvertTo-Json | Set-Content -Encoding UTF8 .\api_output.json
 
+# Assessment Part 2 - create and seed the DynamoDB table
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb create-table --cli-input-json file://dynamodb/table-definition.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb wait table-exists --table-name coupons
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb batch-write-item --request-items file://dynamodb/seed-items.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb describe-table --table-name coupons
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb scan --table-name coupons --select COUNT
+
+# Allow coupons Lambdas to read, update, and query DynamoDB
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam put-role-policy --role-name coupons_lambda_role --policy-name CouponsDynamoDBPolicy --policy-document file://iam/dynamodb-policy.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role-policy --role-name coupons_lambda_role --policy-name CouponsDynamoDBPolicy
+
+# Build and package the Part 2 Lambdas
+npm run build:lambdas
+Compress-Archive -Path .\build\get-by-id\index.js -DestinationPath .\coupons_get_by_id.zip -Force
+Compress-Archive -Path .\build\update\index.js -DestinationPath .\coupons_update.zip -Force
+
+# Register coupons_get_by_id and coupons_update
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda create-function --function-name coupons_get_by_id --runtime nodejs22.x --handler index.handler --role arn:aws:iam::000000000000:role/coupons_lambda_role --zip-file fileb://coupons_get_by_id.zip --timeout 10 --environment "Variables={TABLE_NAME=coupons,DYNAMODB_ENDPOINT=http://localhost.localstack.cloud:4566}"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda create-function --function-name coupons_update --runtime nodejs22.x --handler index.handler --role arn:aws:iam::000000000000:role/coupons_lambda_role --zip-file fileb://coupons_update.zip --timeout 10 --environment "Variables={TABLE_NAME=coupons,DYNAMODB_ENDPOINT=http://localhost.localstack.cloud:4566}"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda wait function-active-v2 --function-name coupons_get_by_id
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda wait function-active-v2 --function-name coupons_update
+
+# Invoke both Lambdas directly and save their output
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda invoke --function-name coupons_get_by_id --payload fileb://events/get-coupon-event.json output-get-by-id.json
+Get-Content .\output-get-by-id.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda invoke --function-name coupons_update --payload fileb://events/update-coupon-event.json output-update.json
+Get-Content .\output-update.json
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda invoke --function-name coupons_get_by_id --payload fileb://events/get-coupon-event.json output-get-after-update.json
+Get-Content .\output-get-after-update.json
+
+# Add GET and PUT /coupons_poc/{id}
+$idResource = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway create-resource --rest-api-id $API_ID --parent-id $RESOURCE_ID --path-part '{id}' | ConvertFrom-Json
+$ID_RESOURCE_ID = $idResource.id
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway put-method --rest-api-id $API_ID --resource-id $ID_RESOURCE_ID --http-method GET --authorization-type NONE
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway put-method --rest-api-id $API_ID --resource-id $ID_RESOURCE_ID --http-method PUT --authorization-type NONE
+$GET_LAMBDA_ARN = "arn:aws:lambda:us-east-1:000000000000:function:coupons_get_by_id"
+$GET_INTEGRATION_URI = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/$GET_LAMBDA_ARN/invocations"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway put-integration --rest-api-id $API_ID --resource-id $ID_RESOURCE_ID --http-method GET --type AWS_PROXY --integration-http-method POST --uri $GET_INTEGRATION_URI
+$UPDATE_LAMBDA_ARN = "arn:aws:lambda:us-east-1:000000000000:function:coupons_update"
+$UPDATE_INTEGRATION_URI = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/$UPDATE_LAMBDA_ARN/invocations"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway put-integration --rest-api-id $API_ID --resource-id $ID_RESOURCE_ID --http-method PUT --type AWS_PROXY --integration-http-method POST --uri $UPDATE_INTEGRATION_URI
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda add-permission --function-name coupons_get_by_id --statement-id apigateway-coupons-get-by-id --action lambda:InvokeFunction --principal apigateway.amazonaws.com --source-arn "arn:aws:execute-api:us-east-1:000000000000:$API_ID/*/GET/coupons_poc/*"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda add-permission --function-name coupons_update --statement-id apigateway-coupons-update --action lambda:InvokeFunction --principal apigateway.amazonaws.com --source-arn "arn:aws:execute-api:us-east-1:000000000000:$API_ID/*/PUT/coupons_poc/*"
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway create-deployment --rest-api-id $API_ID --stage-name test --description "Coupons API Part 2 deployment"
+
+# Test GET and PUT through API Gateway and save the outputs
+$COUPON_URL = "http://localhost:4566/_aws/execute-api/$API_ID/test/coupons_poc/coupon-001"
+$getResponse = Invoke-RestMethod -Uri $COUPON_URL -Method GET
+$getResponse | ConvertTo-Json | Set-Content -Encoding UTF8 .\api-get-by-id-output.json
+$updateBody = @{ description = "Updated through API Gateway"; discount_percent = 30; campaign_id = "campaign-winter" } | ConvertTo-Json
+$updateResponse = Invoke-RestMethod -Uri $COUPON_URL -Method PUT -ContentType "application/json" -Body $updateBody
+$updateResponse | ConvertTo-Json | Set-Content -Encoding UTF8 .\api-update-output.json
+
+# Query the provider_id/campaign_id global secondary index
+$gsiResult = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb query --table-name coupons --index-name provider_id-campaign_id-index --key-condition-expression "provider_id = :provider AND campaign_id = :campaign" --expression-attribute-values file://dynamodb/query-values.json | ConvertFrom-Json
+$gsiResult | ConvertTo-Json -Depth 10
+$gsiResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\gsi-query-output.json
+
+# Save table and Lambda configuration evidence
+$tableOutput = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb describe-table --table-name coupons | ConvertFrom-Json
+$tableOutput | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\table-description-output.json
+$lambdaOutput = aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda list-functions | ConvertFrom-Json
+$lambdaOutput | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\lambda-functions-output.json
+
 # Run Newman and save its JSON report
 npx newman run .\coupons_newman.json --env-var "apiId=$API_ID" --reporters cli,json --reporter-json-export .\newman_output.json
 
 # Useful evidence commands for the recording
 aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role --role-name coupons_lambda_role
 aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role-policy --role-name coupons_lambda_role --policy-name CouponsCloudWatchLogsPolicy
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack iam get-role-policy --role-name coupons_lambda_role --policy-name CouponsDynamoDBPolicy
 aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda get-function --function-name coupons_list
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda get-function --function-name coupons_get_by_id
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack lambda get-function --function-name coupons_update
 aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack apigateway get-resources --rest-api-id $API_ID
+aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack dynamodb describe-table --table-name coupons
 aws --no-cli-pager --endpoint-url $LOCALSTACK_ENDPOINT --profile localstack logs describe-log-groups --log-group-name-prefix /aws/lambda/coupons
 Get-Content .\api_output.json
+Get-Content .\api-get-by-id-output.json
+Get-Content .\api-update-output.json
+Get-Content .\gsi-query-output.json
 npm run test:json
 npx newman run .\coupons_newman.json --env-var "apiId=$API_ID"
 

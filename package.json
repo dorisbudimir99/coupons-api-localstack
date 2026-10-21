@@ -7,10 +7,18 @@
   "scripts": {
     "test": "jest --runInBand",
     "test:json": "jest --runInBand --json --outputFile=unit_test_output.json",
-    "newman": "newman run coupons_newman.json"
+    "newman": "newman run coupons_newman.json",
+    "build:get-by-id": "esbuild ./src/coupons-get-by-id.js --bundle --platform=node --target=node22 --outfile=./build/get-by-id/index.js",
+    "build:update": "esbuild ./src/coupons-update.js --bundle --platform=node --target=node22 --outfile=./build/update/index.js",
+    "build:lambdas": "npm run build:get-by-id && npm run build:update"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "jest": "^30.5.2",
     "newman": "^6.2.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1153.0",
+    "@aws-sdk/util-dynamodb": "^3.996.9"
   }
 }

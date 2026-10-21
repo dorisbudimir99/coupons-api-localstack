@@ -1,0 +1,15 @@
+{
+  "resource": "/coupons_poc/{id}",
+  "path": "/coupons_poc/coupon-001",
+  "httpMethod": "PUT",
+  "pathParameters": {
+    "id": "coupon-001"
+  },
+  "requestContext": {
+    "resourcePath": "/coupons_poc/{id}",
+    "httpMethod": "PUT",
+    "stage": "test"
+  },
+  "body": "{\"description\":\"Updated fall coupon\",\"discount_percent\":25}",
+  "isBase64Encoded": false
+}

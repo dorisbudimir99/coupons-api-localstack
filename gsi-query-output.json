@@ -1,0 +1,53 @@
+﻿{
+    "Items":  [
+                  {
+                      "code":  {
+                                   "S":  "WINTER15"
+                               },
+                      "is_active":  {
+                                        "BOOL":  true
+                                    },
+                      "provider_id":  {
+                                          "S":  "provider-001"
+                                      },
+                      "description":  {
+                                          "S":  "15 percent off a winter purchase"
+                                      },
+                      "id":  {
+                                 "S":  "coupon-002"
+                             },
+                      "discount_percent":  {
+                                               "N":  "15"
+                                           },
+                      "campaign_id":  {
+                                          "S":  "campaign-winter"
+                                      }
+                  },
+                  {
+                      "code":  {
+                                   "S":  "FALL20"
+                               },
+                      "is_active":  {
+                                        "BOOL":  true
+                                    },
+                      "description":  {
+                                          "S":  "Updated through API Gateway"
+                                      },
+                      "provider_id":  {
+                                          "S":  "provider-001"
+                                      },
+                      "id":  {
+                                 "S":  "coupon-001"
+                             },
+                      "discount_percent":  {
+                                               "N":  "30"
+                                           },
+                      "campaign_id":  {
+                                          "S":  "campaign-winter"
+                                      }
+                  }
+              ],
+    "Count":  2,
+    "ScannedCount":  2,
+    "ConsumedCapacity":  null
+}

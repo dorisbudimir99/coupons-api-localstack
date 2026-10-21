@@ -1,0 +1,8 @@
+{
+  ":provider": {
+    "S": "provider-001"
+  },
+  ":campaign": {
+    "S": "campaign-winter"
+  }
+}
